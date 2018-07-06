@@ -13,26 +13,39 @@ Run following command on the bastion host as root user. This will give you OpenS
 /bin/bash bootstrap.sh
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
-# oc adm policy add-cluster-role-to-user cluster-admin admin
-ssh master1.$GUID.internal && exit # dummy login and exit to make sure .kube folder is created
+```
+
+Make sure that /root/.kube directory have valid credentials so that you can run oc command from bastion host.
+```
+source ~/.bashrc
+ssh master1.$GUID.internal exit # dummy login and exit to make sure .kube folder is created
 mkdir /root/.kube
 scp master1.$GUID.internal:/home/ec2-user/.kube/config /root/.kube/config
 ```
 
 ## 2. Configure CI/CD pipeline using Jenkins
+Create `my-cicd` project and deploy 2 applications: `jenkins-persistent` and arbitrary application service(here I used ruby-ex app as an instance).
 ```
-# 0. 事前準備
-# ===
+oc adm policy add-cluster-role-to-user cluster-admin admin
 oc login -u admin -p admin
-oc create -f jenkins-pv.yaml
+cat jenkins-pv.yaml | sed "s/___GUID___/$GUID/g" | oc create -f -
 ansible nfs -m file -a "path=/srv/nfs/jenkins state=directory mode=0777 owner=nfsnobody group=nfsnobody"
 oc new-project my-cicd
 oc new-app jenkins-persistent --param ENABLE_OAUTH=true
 oc new-app openshift/ruby~https://github.com/remore/ruby-ex
-# ここまででまず動作確認しておく
-ssh master1.$GUID.internal curl -s 172.30.44.112:8080 | grep "<h1>"
-# <h1>Hi! Welcome to your Ruby application on OpenShift</h1> のように出る
+```
 
+If the deployment was successful, you will see following command working:
+```
+export SERVICE_IP=`oc get service | grep ruby-ex | grep "[0-9]*\.[0-9]*\.[0-9]*.[0-9]*" -o`
+ssh master1.$GUID.internal curl -s $SERVICE_IP:8080 | grep "<h1>"
+# <h1>Hi! Welcome to your Ruby application on OpenShift</h1> のように出る
+```
+
+And here are a few configurations you need to set for GitHub Integration:
+
+- Setup credentials 
+  * Visit https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/credentials/ and 
 # 1. JenkinsのGitHub連携の設定
 # ===
 # ここのページでまずはCredential情報をJenkinsとGitHubそれぞれに設定する
@@ -83,6 +96,11 @@ oc create -f project-template.yaml
 ansible-playbook multitenancy.yaml
 ansible masters -m shell -a"systemctl restart atomic-openshift-master-api atomic-openshift-master-controllers"
 
+# Set node labels
+oc label node node1.$GUID.internal client=alpha
+oc label node node2.$GUID.internal client=beta
+oc label node node3.$GUID.internal client=common
+
 # Creating initial users for clients
 USERNAME=amy CLIENT=alpha /bin/bash create-user.sh
 USERNAME=andrew CLIENT=alpha /bin/bash create-user.sh
@@ -90,5 +108,7 @@ USERNAME=brian CLIENT=beta /bin/bash create-user.sh
 USERNAME=betty CLIENT=beta /bin/bash create-user.sh
 ```
 
-## 3-ex. On-boarding new client documentation
-TBD
+And as an On-boarding new client documentation: to create a new client/customer you need to execute following commands:
+```
+USERNAME=chris CLIENT=common /bin/bash create-user.sh
+```

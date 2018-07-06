@@ -9,5 +9,5 @@ spec:
   - ReadWriteOnce
   nfs:
     path: /srv/nfs/jenkins
-    server: support1.754d.internal
+    server: support1.$GUID.internal
   persistentVolumeReclaimPolicy: Retain
