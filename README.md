@@ -8,7 +8,7 @@ export RH_PASSWORD=<YOUR_LOGIN_PASSWORD>
 ```
 
 ## 1. Install Openshift v3.9 Cluster on your environment
-Run following command on the bastion host as a root user. This will give you OpenShift HA Cluster out of the box.
+Run following command on the bastion host as root user. This will give you OpenShift HA Cluster out of the box.
 ```
 /bin/bash bootstrap.sh
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
@@ -16,7 +16,7 @@ ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.y
 # oc adm policy add-cluster-role-to-user cluster-admin admin
 ssh master1.$GUID.internal && exit # dummy login and exit to make sure .kube folder is created
 mkdir /root/.kube
-scp master1.$GUID.internal:/home/ec2-user/.kube/config ./.kube/config
+scp master1.$GUID.internal:/home/ec2-user/.kube/config /root/.kube/config
 ```
 
 ## 2. Configure CI/CD pipeline using Jenkins
@@ -78,10 +78,12 @@ oc create -f hpa.yaml -n my-cicd
 
 ## 3. Setting Multitenancy
 ```
-# multitenancyのための各種設定を実施
+# Change a few configuration on master nodes
+oc create -f project-template.yaml
 ansible-playbook multitenancy.yaml
+ansible masters -m shell -a"systemctl restart atomic-openshift-master-api atomic-openshift-master-controllers"
 
-# how to set up initial users
+# Creating initial users for clients
 USERNAME=amy CLIENT=alpha /bin/bash create-user.sh
 USERNAME=andrew CLIENT=alpha /bin/bash create-user.sh
 USERNAME=brian CLIENT=beta /bin/bash create-user.sh
