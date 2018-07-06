@@ -1,0 +1,95 @@
+<project>
+    <actions />
+    <description />
+    <keepDependencies>false</keepDependencies>
+    <properties>
+        <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.26.0">
+            <projectUrl>https://github.com/remore/ruby-ex/</projectUrl>
+            <displayName />
+        </com.coravy.hudson.plugins.github.GithubProjectProperty>
+    </properties>
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@3.8.0">
+        <configVersion>2</configVersion>
+        <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+                <url>git@github.com:remore/ruby-ex.git</url>
+                <credentialsId>b9cfec78-79db-46c4-9412-b1af01e6a334</credentialsId>
+            </hudson.plugins.git.UserRemoteConfig>
+        </userRemoteConfigs>
+        <branches>
+            <hudson.plugins.git.BranchSpec>
+                <name>*/master</name>
+            </hudson.plugins.git.BranchSpec>
+        </branches>
+        <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+        <submoduleCfg class="list" />
+        <extensions />
+    </scm>
+    <canRoam>true</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <triggers>
+        <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.26.0">
+            <spec />
+        </com.cloudbees.jenkins.GitHubPushTrigger>
+    </triggers>
+    <concurrentBuild>false</concurrentBuild>
+    <builders>
+        <com.openshift.jenkins.plugins.pipeline.OpenShiftBuilder plugin="openshift-pipeline@1.0.54">
+            <apiURL />
+            <namespace />
+            <authToken />
+            <verbose>false</verbose>
+            <waitTime />
+            <waitUnit>milli</waitUnit>
+            <bldCfg>ruby-ex</bldCfg>
+            <commitID />
+            <buildName />
+            <showBuildLogs>false</showBuildLogs>
+            <checkForTriggeredDeployments>false</checkForTriggeredDeployments>
+        </com.openshift.jenkins.plugins.pipeline.OpenShiftBuilder>
+        <com.openshift.jenkins.plugins.pipeline.OpenShiftDeployer plugin="openshift-pipeline@1.0.54">
+            <apiURL />
+            <namespace />
+            <authToken />
+            <verbose>false</verbose>
+            <waitTime />
+            <waitUnit>sec</waitUnit>
+            <depCfg>ruby-ex</depCfg>
+        </com.openshift.jenkins.plugins.pipeline.OpenShiftDeployer>
+        <com.openshift.jenkins.plugins.pipeline.OpenShiftServiceVerifier plugin="openshift-pipeline@1.0.54">
+            <apiURL />
+            <namespace />
+            <authToken />
+            <verbose>false</verbose>
+            <svcName>ruby-ex</svcName>
+        </com.openshift.jenkins.plugins.pipeline.OpenShiftServiceVerifier>
+        <com.openshift.jenkins.plugins.pipeline.OpenShiftImageTagger plugin="openshift-pipeline@1.0.54">
+            <apiURL />
+            <namespace />
+            <authToken />
+            <verbose>false</verbose>
+            <testTag>latest</testTag>
+            <prodTag>prod</prodTag>
+            <testStream>ruby-ex</testStream>
+            <prodStream>ruby-ex</prodStream>
+            <destinationNamespace />
+            <destinationAuthToken />
+            <alias>false</alias>
+        </com.openshift.jenkins.plugins.pipeline.OpenShiftImageTagger>
+        <com.openshift.jenkins.plugins.pipeline.OpenShiftDeploymentVerifier plugin="openshift-pipeline@1.0.54">
+            <apiURL />
+            <namespace />
+            <authToken />
+            <verbose>false</verbose>
+            <waitTime />
+            <waitUnit>milli</waitUnit>
+            <depCfg>ruby-ex</depCfg>
+            <replicaCount>1</replicaCount>
+            <verifyReplicaCount>false</verifyReplicaCount>
+        </com.openshift.jenkins.plugins.pipeline.OpenShiftDeploymentVerifier>
+    </builders>
+    <publishers />
+    <buildWrappers />
+</project>

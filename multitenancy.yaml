@@ -1,0 +1,35 @@
+- name: Setup
+  hosts: masters
+  tasks:
+    - name: Adding Service Affinity configuration for "Dedicated node for each Client" clause
+      replace:
+        path: /etc/origin/master/scheduler.json
+        regexp: "region"
+        replace: "region", "client"
+    - name: Setting admissionControl for "admissionControl plugin sets specific limits per label (client/customer)" clause
+      blockinfile:
+        path: /etc/origin/master/master-config.yaml
+        marker: "# ANSIBLE MANAGED BLOCK"
+        insertafter: "  pluginConfig:"
+        content: |2
+              ProjectRequestLimit:
+                configuration:
+                  apiVersion: v1
+                  kind: ProjectRequestLimitConfig
+                  limits:
+                  - selector:
+                      level: admin
+                  - selector:
+                      level: advanced
+                    maxProjects: 10
+                  - maxProjects: 2
+    - name: Prepare for setting project template
+      copy:
+        src: /opt/work/openshift-ha-cluster/project-template.yaml
+        dest: /etc/origin/master/project-template.yaml
+        remote_src: yes
+    - name: Setting project template for "The new project template is modified so that it includes a LimitRange" clause
+      replace:
+        path: /etc/origin/master/master-config.yaml
+        regexp: "projectRequestTemplate: '':"
+        replace: "projectRequestTemplate: '/etc/origin/master/project-template.yaml'"
