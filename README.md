@@ -73,7 +73,7 @@ cat jenkins-config.xml | sed "s/___CREDENTIAL_ID___/$CREDENTIAL_ID/g" | curl --i
 
 If the curl command was successful, then you will see `cicdTest` project created on the list of projects at the Jenkins top page. This means your CI/CD pipeline is ready.
 
-To test this, you can simply change any string(e.g. change "<h1>Hi!" to "<h1>Hola!") in the config.ru and push it. Hit the following command just like before, but this timee you will see the string "Hola".
+To test this, you can simply change any string(e.g. change "Hi!" to "Hola!") in the config.ru and push it. Hit the following command just like before, but this timee you will see the string "Hola".
 ```
 export SERVICE_IP=`oc get service | grep ruby-ex | grep "[0-9]*\.[0-9]*\.[0-9]*.[0-9]*" -o`
 ssh master1.$GUID.internal curl -s $SERVICE_IP:8080 | grep "<h1>"
