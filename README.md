@@ -23,13 +23,13 @@ mkdir /root/.kube
 scp master1.$GUID.internal:/home/ec2-user/.kube/config /root/.kube/config
 ```
 
-## 2. Configure CI/CD pipeline using Jenkins
-Create `my-cicd` project and deploy 2 applications: `jenkins-persistent` and arbitrary application service(here I used ruby-ex app as an instance).
+## 2. Deploy Jenkins and sample application
+Create `my-cicd` project and deploy 2 applications: `jenkins-persistent` and arbitrary application. Instead of `openshift-tasks`, this time I used `ruby-ex` app as an instance.
 ```
 oc adm policy add-cluster-role-to-user cluster-admin admin
 oc login -u admin -p admin
-cat jenkins-pv.yaml | sed "s/___GUID___/$GUID/g" | oc create -f -
 ansible nfs -m file -a "path=/srv/nfs/jenkins state=directory mode=0777 owner=nfsnobody group=nfsnobody"
+cat jenkins-pv.yaml | sed "s/___GUID___/$GUID/g" | oc create -f -
 oc new-project my-cicd
 oc new-app jenkins-persistent --param ENABLE_OAUTH=true
 oc new-app openshift/ruby~https://github.com/remore/ruby-ex
@@ -39,59 +39,60 @@ If the deployment was successful, you will see following command working:
 ```
 export SERVICE_IP=`oc get service | grep ruby-ex | grep "[0-9]*\.[0-9]*\.[0-9]*.[0-9]*" -o`
 ssh master1.$GUID.internal curl -s $SERVICE_IP:8080 | grep "<h1>"
-# <h1>Hi! Welcome to your Ruby application on OpenShift</h1> のように出る
+# you will get something like: "<h1>Hi! Welcome to your Ruby application on OpenShift</h1>"
 ```
 
-And here are a few configurations you need to set for GitHub Integration:
+## 3. Configure CI/CD pipeline using Jenkins
+Here are a few configurations you need to set for GitHub Integration. Take note that you need to replace $GUID with your real id in the following instructions:
 
 - Setup credentials 
-  * Visit https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/credentials/ and 
-# 1. JenkinsのGitHub連携の設定
-# ===
-# ここのページでまずはCredential情報をJenkinsとGitHubそれぞれに設定する
-https://jenkins-my-cicd.apps.754d.example.opentlc.com/credentials/
- -> Globa DomainでAdd Credential し、秘密鍵を登録しておく
-https://github.com/settings/keys
- -> GitHub側では公開鍵を登録しておく
+  * Visit Jenkins [setting page](https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/credentials/store/system/) and add credentials with following values:
+    * Kind: SSH username with private key
+    * Scope: Global
+    * Username: remore
+    * Private Key: Enter directly
+    * Passphrase: (blank)
+    * ID: (blank)
+    * Description: (blank)
+  * Visit GitHub [setting page](https://github.com/settings/keys) and add corresponding public key
+- Setup github hook setting
+  * To make CI/CD work with GitHub, you need to have following webhook setting ready on your account:
+    * setting page will be: https://github.com/remore/ruby-ex/settings/hooks/<your-hook-entry-id>
+    * Payload URL: https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/github-webhook/
+    * Content Type: application/json
+    * SSL verification: Disable
+- Register new project via CLI using API Key
+  * Visit following page and find your API Key
+    * https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/user/admin-admin/configure
+  * Hit following command and get registered
+```
+export API_KEY=bcb3d137712c6b143d17c6b81fd4yyza
+export CREDENTIAL_ID=ab29e21e-49bc-4274-b529-ce990d85xx22
+cat jenkins-config.xml | sed "s/___CREDENTIAL_ID___/$CREDENTIAL_ID/g" | curl --insecure -XPOST "https://jenkins-my-cicd.apps.$GUID.example.opentlc.com/createItem?name=cicdTest" -u admin-admin:$API_KEY -d @- -H "Content-Type:text/xml"
+```
 
-# 2. Jenkinsの新規ジョブ作成
-# ===
-# 前述でAdd Credentialした認証情報でGitHUb連携を行う。
-# ※以下の -u <USER>:<TOKEN> の部分は下記ページでAPI Tokenを表示させることで取得したものを利用
-https://jenkins-my-cicd.apps.754d.example.opentlc.com/user/admin-admin/configure
+If the curl command was successful, then you will see `cicdTest` project created on the list of projects at the Jenkins top page. This means your CI/CD pipeline is ready.
 
-curl --insecure -XPOST 'https://jenkins-my-cicd.apps.754d.example.opentlc.com/createItem?name=yourJobName' -u admin-admin:ea882b713e72c6eb079e979540c4ceb9 --data-binary @jenkins-config.xml -H "Content-Type:text/xml"
+To test this, you can simply change any string(e.g. change "<h1>Hi!" to "<h1>Hola!") in the config.ru and push it. Hit the following command just like before, but this timee you will see the string "Hola".
+```
+export SERVICE_IP=`oc get service | grep ruby-ex | grep "[0-9]*\.[0-9]*\.[0-9]*.[0-9]*" -o`
+ssh master1.$GUID.internal curl -s $SERVICE_IP:8080 | grep "<h1>"
+# you will get something like: "<h1>Hola! Welcome to your Ruby application on OpenShift</h1>"
+```
 
-# 3. CI/CDのためのwebhook設定
-# ===
- githubのremore/ruby-exのsettingsページを訪れて、
-# https://github.com/remore/ruby-ex/settings/hooks/26223471
-# jenkins連携のwebhookの設定のうち"Payload URL"の欄をdefaultの
-# `https://jenkins.openshift.io/github-webhook/`
-# から
-# `https://jenkins-my-cicd.apps.754d.example.opentlc.com/github-webhook/`
-# に変更する
-
-# 3. 設定したCI/CDの動作確認
-# ===
-# https://github.com/remore/ruby-ex のページを訪れて、例えばconfig.ruの<h1>タグ内の文字列を s/Hi!/Hi hello!/ のように変更し、そのままmasterブランチへ変更内容をpushする
-# これにより jenkinsサーバにwebhookが通知され、その結果としてjenkins経由でOpenShiftのビルドが走り新しいdeploymentがdeployされる
-
-ssh master1.$GUID.internal curl -s 172.30.44.112:8080 | grep "<h1>"
-# <h1>Hi hello 2nd! Welcome to your Ruby application on OpenShift</h1> のように変更結果を確認しておく
-
-# 番外編）jenkinsのwebhookの設定周りはこのブログを参考にした
-# ===
-# https://developer.aiming-inc.com/infra/jenkins-github-webhook-collaboration/
-
-#  HPAの設定
+And lastly, execute following commands to set HPA.
+```
 oc create -f limit-range.yaml -n my-cicd
 oc create -f hpa.yaml -n my-cicd
 ```
 
-## 3. Setting Multitenancy
+## 4. Setting Multitenancy
+Change a few configurations on master nodes to:
+- make new project template working
+- add admissionControl setting
+- set dedicated nodes for each clients
+
 ```
-# Change a few configuration on master nodes
 oc create -f project-template.yaml
 ansible-playbook multitenancy.yaml
 ansible masters -m shell -a"systemctl restart atomic-openshift-master-api atomic-openshift-master-controllers"
