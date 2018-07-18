@@ -120,6 +120,15 @@ openshift_prometheus_alertbuffer_storage_type='pvc'
 # Necessary because of a bug in the installer on 3.9
 openshift_prometheus_node_exporter_image_version=v3.9
 
+# grafana
+# === Note ===
+# Thiese will be enabled after 3.10 release but upto 3.9 need to run following:
+#  $ ansible-playbook -e openshift_grafana_node_selector={\"env\":\"infra\"} /usr/share/ansible/openshift-ansible/playbooks/openshift-grafana/config.yml
+# ============
+# openshift_hosted_grafana_deploy=true
+# openshift_grafana_node_selector={"env":"infra"}
+
+
 # ------ Customized Part Finished ------
 
 ###########################################################################
