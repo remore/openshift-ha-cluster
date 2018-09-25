@@ -113,3 +113,6 @@ And as an On-boarding new client documentation: to create a new client/customer 
 ```
 USERNAME=chris CLIENT=common /bin/bash create-user.sh
 ```
+
+## 5. Note
+You can find more configuration options in `hosts.preserved` which is originally managed by GPTE at `/var/preserve/host` on the bastion host.
