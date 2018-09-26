@@ -10,6 +10,7 @@ export RH_PASSWORD=<YOUR_LOGIN_PASSWORD>
 ## 1. Install Openshift v3.9 Cluster on your environment
 Run following command on the bastion host as root user. This will give you OpenShift HA Cluster out of the box.
 ```
+#git checkout refs/tags/v3.9  # In case you'd like to pick from one of previous versions
 /bin/bash bootstrap.sh
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
