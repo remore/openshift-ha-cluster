@@ -16,11 +16,9 @@ openshift_enable_unsupported_configurations=True
 
 # ------ Customized Part Start ------
 # general settings
-deployment_type=openshift-enterprise
-containerized=false
-oreg_url="registry.access.redhat.com/openshift3/ose-${component}:${version}"
-openshift_examples_modify_imagestreams=true
-openshift_release=v3.9.27
+openshift_deployment_type=openshift-enterprise
+openshift_node_groups=[{'name': 'node-config-master', 'labels': ['node-role.kubernetes.io/master=true','runtime=docker']}, {'name': 'node-config-infra', 'labels': ['node-role.kubernetes.io/infra=true','runtime=docker']}, {'name': 'node-config-compute', 'labels': ['node-role.kubernetes.io/compute=true','runtime=docker'], 'edits': [{ 'key': 'kubeletArguments.pods-per-core','value': ['20']}]}]
+#openshift_release=v3.9.27
 os_sdn_network_plugin_name='redhat/openshift-ovs-networkpolicy'
 
 # master settings
@@ -28,11 +26,8 @@ openshift_master_cluster_method=native
 openshift_master_cluster_hostname=loadbalancer1.___GUID___.internal
 openshift_master_cluster_public_hostname=loadbalancer.___GUID___.example.opentlc.com
 openshift_master_default_subdomain=apps.___GUID___.example.opentlc.com
-openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
 openshift_master_htpasswd_file=/opt/work/openshift-ha-cluster/htpasswd
-
-# infra settings
-openshift_hosted_infra_selector='env=infra'
 
 # registry
 openshift_hosted_registry_storage_kind=nfs
@@ -52,9 +47,10 @@ openshift_logging_storage_volume_name=logging
 openshift_logging_storage_volume_size=10Gi
 openshift_logging_storage_labels={'storage': 'logging'}
 openshift_logging_es_cluster_size=1
-openshift_logging_es_nodeselector={"env":"infra"}
-openshift_logging_kibana_nodeselector={"env":"infra"}
-openshift_logging_curator_nodeselector={"env":"infra"}
+openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_logging_curator_default_days=2
 
 # metrics(hawkular/heapster)
 openshift_metrics_install_metrics=true
@@ -65,18 +61,10 @@ openshift_metrics_storage_nfs_options='*(rw,root_squash)'
 openshift_metrics_storage_volume_name=metrics
 openshift_metrics_storage_volume_size=10Gi
 openshift_metrics_storage_labels={'storage': 'metrics'}
-openshift_metrics_cassandra_nodeselector={"env":"infra"}
-openshift_metrics_hawkular_nodeselector={"env":"infra"}
-openshift_metrics_heapster_nodeselector={"env":"infra"}
-
-# etcd
-openshift_hosted_etcd_storage_kind=nfs
-openshift_hosted_etcd_storage_nfs_options="*(rw,root_squash,sync,no_wdelay)"
-openshift_hosted_etcd_storage_nfs_directory=/srv/nfs
-openshift_hosted_etcd_storage_volume_name=osev3-etcd-vol2
-openshift_hosted_etcd_storage_access_modes=["ReadWriteOnce"]
-openshift_hosted_etcd_storage_volume_size=1G
-openshift_hosted_etcd_storage_labels={'storage': 'etcd'}
+openshift_metrics_cassandra_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_metrics_hawkular_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_metrics_duration=2
 
 # service catalog
 openshift_enable_service_catalog=true
@@ -86,48 +74,30 @@ template_service_broker_install=true
 
 # prometheus
 openshift_hosted_prometheus_deploy=true
-openshift_prometheus_node_selector={"env":"infra"}
 openshift_prometheus_namespace=openshift-metrics
-openshift_prometheus_storage_kind=nfs
-openshift_prometheus_storage_access_modes=['ReadWriteOnce']
-openshift_prometheus_storage_nfs_directory=/srv/nfs
-openshift_prometheus_storage_nfs_options='*(rw,root_squash)'
-openshift_prometheus_storage_volume_name=prometheus
-openshift_prometheus_storage_volume_size=10Gi
-openshift_prometheus_storage_labels={'storage': 'prometheus'}
-openshift_prometheus_storage_type='pvc'
+openshift_prometheus_node_selector={"node-role.kubernetes.io/infra":"true"}
 
-# prometheus-alertmanager
-openshift_prometheus_alertmanager_storage_kind=nfs
-openshift_prometheus_alertmanager_storage_access_modes=['ReadWriteOnce']
-openshift_prometheus_alertmanager_storage_nfs_directory=/srv/nfs
-openshift_prometheus_alertmanager_storage_nfs_options='*(rw,root_squash)'
-openshift_prometheus_alertmanager_storage_volume_name=prometheus-alertmanager
-openshift_prometheus_alertmanager_storage_volume_size=10Gi
-openshift_prometheus_alertmanager_storage_labels={'storage': 'prometheus-alertmanager'}
-openshift_prometheus_alertmanager_storage_type='pvc'
-
-# prometheus-alertbuffer
-openshift_prometheus_alertbuffer_storage_kind=nfs
-openshift_prometheus_alertbuffer_storage_access_modes=['ReadWriteOnce']
-openshift_prometheus_alertbuffer_storage_nfs_directory=/srv/nfs
-openshift_prometheus_alertbuffer_storage_nfs_options='*(rw,root_squash)'
-openshift_prometheus_alertbuffer_storage_volume_name=prometheus-alertbuffer
-openshift_prometheus_alertbuffer_storage_volume_size=10Gi
-openshift_prometheus_alertbuffer_storage_labels={'storage': 'prometheus-alertbuffer'}
-openshift_prometheus_alertbuffer_storage_type='pvc'
-
-# Necessary because of a bug in the installer on 3.9
-openshift_prometheus_node_exporter_image_version=v3.9
+openshift_prometheus_storage_type='emptydir'
+openshift_prometheus_alertmanager_storage_type='emptydir'
+openshift_prometheus_alertbuffer_storage_type='emptydir'
+openshift_prometheus_memory_requests=2Gi
+openshift_prometheus_cpu_requests=750m
+openshift_prometheus_memory_limit=2Gi
+openshift_prometheus_cpu_limit=750m
+openshift_prometheus_alertmanager_memory_requests=300Mi
+openshift_prometheus_alertmanager_cpu_requests=200m
+openshift_prometheus_alertmanager_memory_limit=300Mi
+openshift_prometheus_alertmanager_cpu_limit=200m
+openshift_prometheus_alertbuffer_memory_requests=300Mi
+openshift_prometheus_alertbuffer_cpu_requests=200m
+openshift_prometheus_alertbuffer_memory_limit=300Mi
+openshift_prometheus_alertbuffer_cpu_limit=200m
 
 # grafana
-# === Note ===
-# Thiese will be enabled after 3.10 release but upto 3.9 need to run following:
-#  $ ansible-playbook -e openshift_grafana_node_selector={\"env\":\"infra\"} /usr/share/ansible/openshift-ansible/playbooks/openshift-grafana/config.yml
-# ============
-# openshift_hosted_grafana_deploy=true
-# openshift_grafana_node_selector={"env":"infra"}
-
+openshift_grafana_node_selector={"node-role.kubernetes.io/infra":"true"}
+openshift_grafana_storage_type=pvc
+openshift_grafana_pvc_size=2Gi
+openshift_grafana_node_exporter=true
 
 # ------ Customized Part Finished ------
 
@@ -156,18 +126,18 @@ master3.___GUID___.internal
 
 [nodes]
 ## These are the masters
-master1.___GUID___.internal openshift_hostname=master1.___GUID___.internal  openshift_node_labels="{'env': 'master', 'cluster': '___GUID___'}"
-master2.___GUID___.internal openshift_hostname=master2.___GUID___.internal  openshift_node_labels="{'env': 'master', 'cluster': '___GUID___'}"
-master3.___GUID___.internal openshift_hostname=master3.___GUID___.internal  openshift_node_labels="{'env': 'master', 'cluster': '___GUID___'}"
+master1.___GUID___.internal openshift_hostname=master1.___GUID___.internal openshift_node_group_name='node-config-master'
+master2.___GUID___.internal openshift_hostname=master2.___GUID___.internal openshift_node_group_name='node-config-master'
+master3.___GUID___.internal openshift_hostname=master3.___GUID___.internal openshift_node_group_name='node-config-master'
 
 ## These are infranodes
-infranode1.___GUID___.internal openshift_hostname=infranode1.___GUID___.internal  openshift_node_labels="{'env':'infra', 'cluster': '___GUID___'}"
-infranode2.___GUID___.internal openshift_hostname=infranode2.___GUID___.internal  openshift_node_labels="{'env':'infra', 'cluster': '___GUID___'}"
+infranode1.___GUID___.internal openshift_hostname=infranode1.___GUID___.internal openshift_node_group_name='node-config-infra'
+infranode2.___GUID___.internal openshift_hostname=infranode2.___GUID___.internal openshift_node_group_name='node-config-infra'
 
 ## These are regular nodes
-node1.___GUID___.internal openshift_hostname=node1.___GUID___.internal  openshift_node_labels="{'env':'app', 'cluster': '___GUID___'}"
-node2.___GUID___.internal openshift_hostname=node2.___GUID___.internal  openshift_node_labels="{'env':'app', 'cluster': '___GUID___'}"
-node3.___GUID___.internal openshift_hostname=node3.___GUID___.internal  openshift_node_labels="{'env':'app', 'cluster': '___GUID___'}"
+node1.___GUID___.internal openshift_hostname=node1.___GUID___.internal openshift_node_group_name='node-config-compute'
+node2.___GUID___.internal openshift_hostname=node2.___GUID___.internal openshift_node_group_name='node-config-compute'
+node3.___GUID___.internal openshift_hostname=node3.___GUID___.internal openshift_node_group_name='node-config-compute'
 
 [nfs]
 support1.___GUID___.internal openshift_hostname=support1.___GUID___.internal

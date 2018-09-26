@@ -116,3 +116,16 @@ USERNAME=chris CLIENT=common /bin/bash create-user.sh
 
 ## 5. Note
 You can find more configuration options in `hosts.preserved` which is originally managed by GPTE at `/var/preserve/host` on the bastion host.
+
+## 6. Changelog
+This repo will be updated on every OpenShift GA and versioned by `git tag v3.9 && git push --set-upstream origin v3.9` command.
+
+Here is the concise summary of the changes:
+
+- v3.9
+  * Initial version
+- v3.10
+  * Add `openshift_node_groups`, introduce `openshift_node_group_name` parameter at node setup phase, and change node_selector name accordingly(e.g. `{"env":"infra"}` to `{"node-role.kubernetes.io/infra": "true"}`) to add support for [new node configuration scheme](https://docs.openshift.com/container-platform/3.10/release_notes/ocp_3_10_release_notes.html#ocp-310-new-node-configuration-process)
+  * Rewrite prometheus and grafana configurations almost completely to implement [evolving prometheus installation](https://docs.openshift.com/container-platform/3.10/release_notes/ocp_3_10_release_notes.html#ocp-310-prometheus)
+  * Remove `filename` property from `openshift_master_identity_providers` to follow [this upstream change](https://github.com/openshift/openshift-ansible/commit/ff3f33f8376e657084a77f4a1683b45625082571#diff-a0e24a818e38672dc905e586ed53030b)
+
