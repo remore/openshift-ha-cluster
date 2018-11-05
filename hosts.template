@@ -10,10 +10,6 @@ ansible_ssh_user=ec2-user
 # disable memory check, as we are not a production environment
 openshift_disable_check="memory_availability"
 
-# Set this line to enable NFS
-openshift_enable_unsupported_configurations=True
-
-
 # ------ Customized Part Start ------
 # general settings
 openshift_deployment_type=openshift-enterprise
@@ -21,8 +17,20 @@ openshift_node_groups=[{'name': 'node-config-master', 'labels': ['node-role.kube
 #openshift_release=v3.9.27
 os_sdn_network_plugin_name='redhat/openshift-ovs-networkpolicy'
 
+# Deploy Operator Lifecycle Manager Tech Preview
+openshift_enable_olm=true
+
+oreg_url=registry.redhat.io/openshift3/ose-${component}:${version}
+oreg_auth_user=___REGISTRY_USER___
+oreg_auth_password=___REGISTRY_PASSWORD___
+
+# For Operator Framework Images
+openshift_additional_registry_credentials=[{'host':'registry.connect.redhat.com','user':'___REGISTRY_USER___','password':'___REGISTRY_PASSWORD___','test_image':'mongodb/enterprise-operator:0.3.2'}]
+
+# Set this line to enable NFS
+openshift_enable_unsupported_configurations=True
+
 # master settings
-openshift_master_cluster_method=native
 openshift_master_cluster_hostname=loadbalancer1.___GUID___.internal
 openshift_master_cluster_public_hostname=loadbalancer.___GUID___.example.opentlc.com
 openshift_master_default_subdomain=apps.___GUID___.example.opentlc.com
@@ -39,6 +47,7 @@ openshift_hosted_registry_storage_volume_size=10Gi
 
 # logging(EFK)
 openshift_logging_install_logging=true
+openshift_logging_install_eventrouter=true # Send event logs which is scraped via kubernetes API to EFK stack (so that you will be able to see the preserved result of `oc get events`)
 openshift_logging_storage_kind=nfs
 openshift_logging_storage_access_modes=['ReadWriteOnce']
 openshift_logging_storage_nfs_directory=/srv/nfs
@@ -50,6 +59,7 @@ openshift_logging_es_cluster_size=1
 openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra": "true"}
 openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra": "true"}
 openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra": "true"}
+openshift_logging_eventrouter_nodeselector={"node-role.kubernetes.io/infra": "true"}
 openshift_logging_curator_default_days=2
 openshift_logging_es_memory_limit=8Gi
 
@@ -77,6 +87,7 @@ template_service_broker_install=true
 openshift_hosted_prometheus_deploy=true
 openshift_prometheus_namespace=openshift-metrics
 openshift_prometheus_node_selector={"node-role.kubernetes.io/infra":"true"}
+openshift_cluster_monitoring_operator_install=true
 
 openshift_prometheus_storage_type='emptydir'
 openshift_prometheus_alertmanager_storage_type='emptydir'
@@ -131,18 +142,18 @@ master3.___GUID___.internal
 
 [nodes]
 ## These are the masters
-master1.___GUID___.internal openshift_hostname=master1.___GUID___.internal openshift_node_group_name='node-config-master'
-master2.___GUID___.internal openshift_hostname=master2.___GUID___.internal openshift_node_group_name='node-config-master'
-master3.___GUID___.internal openshift_hostname=master3.___GUID___.internal openshift_node_group_name='node-config-master'
+master1.___GUID___.internal openshift_hostname=master1.___GUID___.internal openshift_node_group_name='node-config-master' openshift_node_problem_detector_install=true
+master2.___GUID___.internal openshift_hostname=master2.___GUID___.internal openshift_node_group_name='node-config-master' openshift_node_problem_detector_install=true
+master3.___GUID___.internal openshift_hostname=master3.___GUID___.internal openshift_node_group_name='node-config-master' openshift_node_problem_detector_install=true
 
 ## These are infranodes
-infranode1.___GUID___.internal openshift_hostname=infranode1.___GUID___.internal openshift_node_group_name='node-config-infra'
-infranode2.___GUID___.internal openshift_hostname=infranode2.___GUID___.internal openshift_node_group_name='node-config-infra'
+infranode1.___GUID___.internal openshift_hostname=infranode1.___GUID___.internal openshift_node_group_name='node-config-infra' openshift_node_problem_detector_install=true
+infranode2.___GUID___.internal openshift_hostname=infranode2.___GUID___.internal openshift_node_group_name='node-config-infra' openshift_node_problem_detector_install=true
 
 ## These are regular nodes
-node1.___GUID___.internal openshift_hostname=node1.___GUID___.internal openshift_node_group_name='node-config-compute'
-node2.___GUID___.internal openshift_hostname=node2.___GUID___.internal openshift_node_group_name='node-config-compute'
-node3.___GUID___.internal openshift_hostname=node3.___GUID___.internal openshift_node_group_name='node-config-compute'
+node1.___GUID___.internal openshift_hostname=node1.___GUID___.internal openshift_node_group_name='node-config-compute' openshift_node_problem_detector_install=true
+node2.___GUID___.internal openshift_hostname=node2.___GUID___.internal openshift_node_group_name='node-config-compute' openshift_node_problem_detector_install=true
+node3.___GUID___.internal openshift_hostname=node3.___GUID___.internal openshift_node_group_name='node-config-compute' openshift_node_problem_detector_install=true
 
 [nfs]
 support1.___GUID___.internal openshift_hostname=support1.___GUID___.internal

@@ -6,7 +6,7 @@ cd /opt/work/openshift-ha-cluster/
 subscription-manager register --username=$RH_USERNAME --password=$RH_PASSWORD
 yum install -y atomic-openshift-utils atomic-openshift-clients
 export GUID=`hostname | cut -d"." -f2`; echo "export GUID=$GUID" >> $HOME/.bashrc
-cat hosts.template | sed "s/___GUID___/$GUID/g" > /etc/ansible/hosts
+cat hosts.template | sed "s/___GUID___/$GUID/g" | sed "s/___REGISTRY_USER___/$RH_USERNAME/g" | sed "s/___REGISTRY_PASSWORD___/$RH_PASSWORD/g" > /etc/ansible/hosts
 ansible all -m shell -a 'export GUID=`hostname | cut -d"." -f2`; echo "export GUID=$GUID" >> $HOME/.bashrc'
 
 # Make sure all hosts are reachable
