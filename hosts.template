@@ -20,12 +20,12 @@ deployment_type=openshift-enterprise
 containerized=false
 oreg_url="registry.access.redhat.com/openshift3/ose-${component}:${version}"
 openshift_examples_modify_imagestreams=true
-openshift_release=v3.9.27
+openshift_release=v3.9.41
 os_sdn_network_plugin_name='redhat/openshift-ovs-networkpolicy'
 
 # master settings
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=loadbalancer1.___GUID___.internal
+openshift_master_cluster_hostname=loadbalancer.___GUID___.internal
 openshift_master_cluster_public_hostname=loadbalancer.___GUID___.example.opentlc.com
 openshift_master_default_subdomain=apps.___GUID___.example.opentlc.com
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
@@ -142,7 +142,7 @@ nodes
 nfs
 
 [lb]
-loadbalancer1.___GUID___.internal
+loadbalancer.___GUID___.internal
 
 [masters]
 master1.___GUID___.internal
