@@ -31,7 +31,7 @@ openshift_additional_registry_credentials=[{'host':'registry.connect.redhat.com'
 openshift_enable_unsupported_configurations=True
 
 # master settings
-openshift_master_cluster_hostname=loadbalancer1.___GUID___.internal
+openshift_master_cluster_hostname=loadbalancer.___GUID___.internal
 openshift_master_cluster_public_hostname=loadbalancer.___GUID___.example.opentlc.com
 openshift_master_default_subdomain=apps.___GUID___.example.opentlc.com
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
